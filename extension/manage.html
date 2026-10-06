@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>MessageHook · 地址簿</title>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body class="page">
+  <header class="app-header">
+    <img src="icons/icon48.png" alt="">
+    <span class="title">MessageHook · 地址簿</span>
+    <span class="ver" id="ver"></span>
+    <button class="btn sm ghost" id="btn-popup" title="打开推送面板">推送面板</button>
+  </header>
+
+  <main>
+    <div class="toolbar card">
+      <button class="btn primary" id="btn-new">＋ 新增地址</button>
+      <select id="preset" style="width:auto; min-width:200px">
+        <option value="">从预设模板开始…</option>
+      </select>
+      <span class="spacer"></span>
+      <button class="btn" id="btn-import-file">导入文件…</button>
+      <button class="btn" id="btn-import-paste">粘贴导入</button>
+      <button class="btn" id="btn-export-file">导出文件</button>
+      <button class="btn" id="btn-export-clipboard">复制到剪贴板</button>
+    </div>
+
+    <section class="card" id="io-card" hidden>
+      <h3 id="io-title">导入地址簿</h3>
+      <div class="field">
+        <label for="io-text">JSON 内容（支持本扩展导出的文件，也兼容 <code>[{ "name": "...", "url": "...", "template": "..." }]</code>）</label>
+        <textarea id="io-text" class="code" rows="8" spellcheck="false" placeholder='{"webhooks":[{"name":"我的服务","url":"https://...","template":"{\"content\":\"{{ content }}\"}"}]}'></textarea>
+      </div>
+      <div class="row wrap" style="margin-top:8px">
+        <label class="hint"><input type="radio" name="io-mode" value="merge" checked> 合并到现有地址</label>
+        <label class="hint"><input type="radio" name="io-mode" value="replace"> 覆盖（清空后导入）</label>
+        <label class="hint">重名时：</label>
+        <select id="io-dup" style="width:auto">
+          <option value="rename">保留两者（自动改名）</option>
+          <option value="overwrite">覆盖同名地址</option>
+          <option value="skip">跳过</option>
+        </select>
+        <span class="spacer"></span>
+        <button class="btn" id="btn-io-cancel">取消</button>
+        <button class="btn primary" id="btn-io-confirm">确认导入</button>
+      </div>
+      <div id="io-result"></div>
+    </section>
+
+    <div class="page-grid">
+      <section class="card">
+        <div class="row">
+          <h3 class="grow" style="margin:0">地址列表 <span class="hint" id="list-count"></span></h3>
+        </div>
+        <div class="list" id="list" style="margin-top:8px"></div>
+      </section>
+
+      <section class="card" id="editor">
+        <div class="row">
+          <h3 class="grow" style="margin:0" id="editor-title">新建地址</h3>
+          <span class="chip" id="dirty" hidden>未保存</span>
+        </div>
+
+        <div class="form-grid" style="margin-top:10px">
+          <div class="field">
+            <label for="f-name">名称</label>
+            <input id="f-name" type="text" placeholder="例如：我的手机 / 企业微信值班群">
+          </div>
+          <div class="field">
+            <label for="f-method">请求方法</label>
+            <select id="f-method"></select>
+          </div>
+          <div class="field span2">
+            <label for="f-url">Webhook 地址（支持 {{ url }} 之类的变量）</label>
+            <input id="f-url" type="text" spellcheck="false" placeholder="https://example.com/webhook">
+          </div>
+          <div class="field">
+            <label for="f-ctype">Content-Type（决定 {{ content }} 的转义方式）</label>
+            <input id="f-ctype" type="text" list="ctype-list" spellcheck="false">
+            <datalist id="ctype-list"></datalist>
+          </div>
+          <div class="field">
+            <label>选项</label>
+            <div class="row wrap">
+              <label class="hint"><input type="checkbox" id="f-enabled"> 启用（出现在右键菜单与推送面板）</label>
+              <label class="hint"><input type="checkbox" id="f-mdtohtml"> 发送前把 Markdown 转成 HTML</label>
+            </div>
+          </div>
+          <div class="field span2">
+            <label for="f-headers">自定义请求头（每行一个 <code>名称: 值</code>，值里可用变量）</label>
+            <textarea id="f-headers" class="code" rows="2" spellcheck="false" placeholder="Authorization: Bearer xxx"></textarea>
+          </div>
+          <div class="field span2">
+            <label for="f-template">消息模板（正文用 <code>{{ content }}</code> 占位）</label>
+            <textarea id="f-template" class="code" rows="8" spellcheck="false"></textarea>
+            <div class="var-list" id="vars" style="margin-top:6px"></div>
+            <div class="hint">
+              变量默认按 Content-Type 自动转义（JSON 转义 / URL 编码 / 原样）；也可以强制写法：
+              <code>{{ content_json }}</code>、<code>{{ content_url }}</code>、<code>{{ content_raw }}</code>。
+            </div>
+          </div>
+        </div>
+
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn primary" id="btn-save">保存</button>
+          <button class="btn" id="btn-reset">还原</button>
+          <button class="btn" id="btn-test">测试发送</button>
+          <span class="spacer"></span>
+          <button class="btn danger" id="btn-delete">删除</button>
+        </div>
+
+        <div id="test-result" style="margin-top:10px"></div>
+
+        <details style="margin-top:10px" open>
+          <summary>请求预览（用下面的测试内容渲染）</summary>
+          <div>
+            <div class="field">
+              <label for="f-test">测试内容</label>
+              <textarea id="f-test" rows="3">## MessageHook 测试
+
+这是一条来自浏览器扩展的测试消息。</textarea>
+            </div>
+            <div id="preview" style="margin-top:8px"></div>
+          </div>
+        </details>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="manage.js"></script>
+</body>
+</html>

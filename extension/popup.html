@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>MessageHook 推送</title>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body class="popup">
+  <header class="app-header">
+    <img src="icons/icon48.png" alt="">
+    <span class="title">MessageHook 推送</span>
+    <button class="btn sm ghost" id="open-manage" title="管理地址簿">地址簿</button>
+  </header>
+
+  <main>
+    <div class="field">
+      <label for="webhook">推送地址</label>
+      <div class="row">
+        <select id="webhook" class="grow"></select>
+        <button class="btn sm" id="add-hook" title="新增地址">＋</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field grow">
+        <label>内容格式</label>
+        <div class="seg" id="format">
+          <button type="button" data-format="markdown" class="on">Markdown</button>
+          <button type="button" data-format="text">纯文本</button>
+          <button type="button" data-format="html">HTML</button>
+        </div>
+      </div>
+      <div class="field grow">
+        <label for="title">标题（可选）</label>
+        <input id="title" type="text" placeholder="留空则用页面标题">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="content">消息内容 <span class="hint" id="counter"></span></label>
+      <textarea id="content" rows="7" placeholder="支持 Markdown / 纯文本 / HTML，Ctrl+Enter 发送"></textarea>
+    </div>
+
+    <div class="row wrap">
+      <button class="btn sm" id="fill-page" title="把当前页面的标题和地址填进来">插入当前页面</button>
+      <button class="btn sm" id="preview-toggle">预览请求</button>
+      <span class="chip" id="page-info" hidden></span>
+    </div>
+
+    <section id="preview" hidden></section>
+    <section id="result" hidden></section>
+
+    <div class="row">
+      <button class="btn primary grow" id="send">发送</button>
+      <button class="btn" id="clear" title="清空标题和内容">清空</button>
+    </div>
+
+    <section class="card" id="history-card" hidden>
+      <div class="row">
+        <h3 class="grow" style="margin:0">最近发送</h3>
+        <button class="btn sm ghost" id="clear-history">清除记录</button>
+      </div>
+      <div class="history" id="history" style="margin-top:6px"></div>
+    </section>
+  </main>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

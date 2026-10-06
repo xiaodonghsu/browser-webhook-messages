@@ -1,0 +1,13 @@
+{
+  "name": "messagehook",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MessageHook 浏览器扩展（此 package.json 只服务于本地测试，扩展本身不依赖它）",
+  "scripts": {
+    "test": "node test/run.mjs",
+    "test:integration": "node test/integration.mjs",
+    "test:ui": "node test/ui-smoke.mjs",
+    "test:all": "node test/run.mjs && node test/integration.mjs && node test/ui-smoke.mjs"
+  }
+}
